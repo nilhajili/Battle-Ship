@@ -18,7 +18,6 @@ int getKeyPress() {
     newt = oldt;
     newt.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
     ch = getchar();
     if (ch == 27) {
         int ch1 = getchar();
@@ -27,7 +26,6 @@ int getKeyPress() {
             ch = ch2;
         }
     }
-
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     return ch;
 }
@@ -46,25 +44,35 @@ public:
         table.resize(size, vector<string>(size, emptyCell));
     }
 
-    void displayBoard(int cursorX = -1, int cursorY = -1) const {
+    void displayBoard(int cursorX = -1, int cursorY = -1, int length=1, const string& direction="right" ) const {
         cout << "  ";
         for (int i = 0; i < size; ++i) {
             cout << i << " ";
         }
         cout << endl;
-
         for (int i = 0; i < size; ++i) {
             cout << i << " ";
             for (int j = 0; j < size; ++j) {
-                if (i == cursorX && j == cursorY)
-                    cout << "@" << " ";
+                bool isCursor = false;
+                for (int k = 0; k < length; ++k) {
+                    int nx = cursorX, ny = cursorY;
+                    if (direction == "right") ny += k;
+                    else if (direction == "left") ny -= k;
+                    else if (direction == "down") nx += k;
+                    else if (direction == "up") nx -= k;
+                    if (i == nx && j == ny) {
+                        isCursor = true;
+                        break;
+                    }
+                }
+                if (isCursor)
+                    cout << "&" << " ";
                 else
                     cout << table[i][j] << " ";
             }
             cout << endl;
         }
-    }
-
+    }    
     string getCell(int x, int y) const {
         return table[x][y];
     }
@@ -196,8 +204,8 @@ public:
         return Ship::place(board, ships, x, y, length, direction, ones, twos, threes, fours);
     }
 
-    void displayBoard(int cursorX = -1, int cursorY = -1) const {
-        board.displayBoard(cursorX, cursorY);
+    void displayBoard(int cursorX = -1, int cursorY = -1, int length=1 , const string& direction="right") const {
+       board.displayBoard(cursorX, cursorY, length,direction);
     }
 
     bool attack(Player& opponent, int x, int y) {
@@ -207,6 +215,48 @@ public:
     bool hasLost() const {
         return board.isGameOver();
     }
+    void placeShips() {
+    int x = 0, y = 0;
+    string direction = "right";
+    int shipLength = 1;
+
+    while (true) {
+        system("clear");
+        cout << "    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗\n";
+        cout << "    ██╔════╝██║  ██║██║██╔══██╗    ██╔══██╗██║     ██╔══██╗██╔════╝██╔════╝\n";
+        cout << "    ███████╗███████║██║██████╔╝    ██████╔╝██║     ███████║██║     █████╗  \n";
+        cout << "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  \n";
+        cout << "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗\n";
+        cout << "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝\n\n";
+        cout << name << " - Place your ships\n";
+        cout << "Use arrows to move | 'r' rotate | '1'-'4' to set ship length | Enter to place\n";
+        cout << "Ship Length: " << shipLength << " | Direction: " << direction
+             << " | Cursor: (" << x << ", " << y << ")\n";
+        printShipCount();
+        cout << "\n";
+        displayBoard(x, y,shipLength,direction);
+
+        int key = getKeyPress();
+        if (key == KEY_UP && x > 0) x--;
+        else if (key == KEY_DOWN && x < 9) x++;
+        else if (key == KEY_LEFT && y > 0) y--;
+        else if (key == KEY_RIGHT && y < 9) y++;
+        else if (key == KEY_ENTER) {
+            if (placeShip(x, y, shipLength, direction)) {
+                if (ships.size() == 10) break;
+            }
+        } else if (key == 'r') {
+            if (direction == "right") direction = "down";
+            else if (direction == "down") direction = "left";
+            else if (direction == "left") direction = "up";
+            else direction = "right";
+        } else if (key == 'n') {
+            shipLength++;
+            if (shipLength > 4) shipLength = 1;
+        }
+    }
+}
+
 
     void printShipCount() const {
         cout << "Placed Ships - 1x" << ones
@@ -218,57 +268,8 @@ public:
 int main() {
     Player player1("Player 1");
     Player player2("Player 2");
-    Player* current = &player1;
-    Player* opponent = &player2;
-
-    int x = 0, y = 0;
-    string direction = "right";
-    int shipLength = 1;
-        for (int p = 0; p < 2; ++p) {
-            current = (p == 0) ? &player1 : &player2;
-        
-            while (true) {
-                system("clear");
-                cout << "    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗\n";
-                cout << "    ██╔════╝██║  ██║██║██╔══██╗    ██╔══██╗██║     ██╔══██╗██╔════╝██╔════╝\n";
-                cout << "    ███████╗███████║██║██████╔╝    ██████╔╝██║     ███████║██║     █████╗  \n";
-                cout << "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  \n";
-                cout << "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗\n";
-                cout << "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝\n\n";
-                cout << current->getName() << " - Place your ships\n";
-                cout << "Use arrows to move | 'r' rotate | '1'-'4' to set ship length | Enter to place\n";
-                cout << "Ship Length: " << shipLength << " | Direction: " << direction
-                     << " | Cursor: (" << x << ", " << y << ")\n";
-                current->printShipCount();
-                cout << "\n";
-                current->displayBoard(x, y);
-        
-                int key = getKeyPress();
-                if (key == KEY_UP && x > 0) x--;
-                else if (key == KEY_DOWN && x < 9) x++;
-                else if (key == KEY_LEFT && y > 0) y--;
-                else if (key == KEY_RIGHT && y < 9) y++;
-                else if (key == KEY_ENTER) {
-                    if (current->placeShip(x, y, shipLength, direction)) {
-                        if (current->getShips().size() == 10) break;
-                    }
-                } else if (key == 'r') {
-                    if (direction == "right") direction = "down";
-                    else if (direction == "down") direction = "left";
-                    else if (direction == "left") direction = "up";
-                    else direction = "right";
-                }  else if (key == 'n') {
-                    shipLength++;
-                    if (shipLength > 4) shipLength = 1;
-                } else if (key >= '1' && key <= '4') {
-                    shipLength = key - '0';
-                }
-            }
-            if (p == 0) {
-                cout << "\nPlayer 1 done. Press any key to switch to Player 2...";
-                getKeyPress();
-                x = y = 0;
-                direction = "right";
-                shipLength = 1;
-            }
-        }}
+    player1.placeShips();
+    cout << "\nPlayer 1 done. Press any key to switch to Player 2...";
+    getKeyPress();
+    player2.placeShips();
+}
