@@ -34,14 +34,14 @@ class Board {
 private:
     vector<vector<string> > table;
     const int size = 10;
-    string emptyCell = "*";
-    string shipCell = "#";
-    string hitCell = "S";
-    string missCell = "M";
+    string emptyPick = "*";
+    string shipPick = "\033[36m#\033[0m";
+    string hitPick = "\033[32mS\033[0m";
+    string missPick= "\033[32mM\033[0m ";
 
 public:
     Board() {
-        table.resize(size, vector<string>(size, emptyCell));
+        table.resize(size, vector<string>(size, emptyPick));
     }
 
     void displayBoard(int cursorX = -1, int cursorY = -1, int length=1, const string& direction="right" ) const {
@@ -56,17 +56,17 @@ public:
                 bool isCursor = false;
                 for (int k = 0; k < length; ++k) {
                     int nx = cursorX, ny = cursorY;
-                    if (direction == "right") ny += k;
-                    else if (direction == "left") ny -= k;
-                    else if (direction == "down") nx += k;
-                    else if (direction == "up") nx -= k;
+                    if (direction == "right") ny = cursorY + k;
+                    else if (direction == "left") ny = cursorY - (length - 1) + k;
+                    else if (direction == "down") nx = cursorX + k;
+                    else if (direction == "up") nx = cursorX - (length - 1) + k;
                     if (i == nx && j == ny) {
                         isCursor = true;
                         break;
                     }
                 }
                 if (isCursor)
-                    cout << "&" << " ";
+                    cout <<"\033[35m"<< "&" <<' '<< "\033[0m";
                 else
                     cout << table[i][j] << " ";
             }
@@ -82,32 +82,32 @@ public:
             if (y + length > size) return false;
 
             for (int i = y; i < y + length; ++i) {
-                if (table[x][i] == shipCell) return false;
+                if (table[x][i] == shipPick) return false;
             }
 
             for (int i = y; i < y + length; ++i) {
-                table[x][i] = shipCell;
+                table[x][i] = shipPick;
             }
         } else {
             if (x + length > size) return false;
 
             for (int i = x; i < x + length; ++i) {
-                if (table[i][y] == shipCell) return false;
+                if (table[i][y] == shipPick) return false;
             }
 
             for (int i = x; i < x + length; ++i) {
-                table[i][y] = shipCell;
+                table[i][y] = shipPick;
             }
         }
         return true;
     }
 
     bool attack(int x, int y) {
-        if (table[x][y] == shipCell) {
-            table[x][y] = hitCell;
+        if (table[x][y] == shipPick) {
+            table[x][y] = hitPick;
             return true;
-        } else if (table[x][y] == emptyCell) {
-            table[x][y] = missCell;
+        } else if (table[x][y] == emptyPick) {
+            table[x][y] = missPick;
             return false;
         }
         return false;
@@ -115,8 +115,8 @@ public:
 
     bool isGameOver() const {
         for (const auto& row : table) {
-            for (const auto& cell : row) {
-                if (cell == shipCell) return false;
+            for (const auto& pick : row) {
+                if (pick == shipPick) return false;
             }
         }
         return true;
