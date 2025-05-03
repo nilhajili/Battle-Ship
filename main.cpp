@@ -43,7 +43,6 @@ public:
     Board() {
         table.resize(size, vector<string>(size, emptyPick));
     }
-
     void displayBoard(int cursorX = -1, int cursorY = -1, int length = 1,
                 const string& direction = "right", const string& mode = "owner") const {
         cout << "  ";
@@ -81,7 +80,7 @@ public:
         }
         }
 
-    string getCell(int x, int y) const {
+    string getKey(int x, int y) const {
         return table[x][y];
     }
 
@@ -135,13 +134,39 @@ public:
 
 class Ship {
 private:
-    int x, y, length;
-    bool isHorizontal;
-    int hitsTaken;
-
+    int _x, _y, _len, _hitsTaken;
+    bool _isHorizontal;
 public:
-    Ship(int startX, int startY, int len, bool horizontal)
-        : x(startX), y(startY), length(len), isHorizontal(horizontal), hitsTaken(0) {}
+    Ship(int x, int y, int len, bool horizontal){
+        setX(x);
+        setY(y);
+        setLen(len);
+        setIsHorizontal(horizontal);
+    }
+    void setX(int x){
+        _x=x;
+    }
+    void setY(int y){
+        _y=y;
+    }
+    void setLen(int len){
+        _len=len;
+    }
+    void setIsHorizontal(bool horizontal){
+        _isHorizontal=horizontal;
+    }
+    int getY(){
+        return _y;
+    }
+    int getX(){
+        return _x;
+    }
+    int getLen(){
+        return _len;
+    }
+    bool getIsHorizontal(){
+        return _isHorizontal;
+    }
 
     static bool place(Board& board, vector<Ship>& ships, int x, int y, int len, const string& direction,
                       int& ones, int& twos, int& threes, int& fours) {
@@ -168,12 +193,11 @@ public:
                 cout << "Ship goes out of bounds.\n";
                 return false;
             }
-            if (board.getCell(nx, ny) == "#") {
+            if (board.getKey(nx, ny) == "#") {
                 cout << "Collision detected. Ship can't be placed.\n";
                 return false;
             }
         }
-
         bool isHorizontal = (dx == 0);
         if (!board.placeShip(x, y, len, isHorizontal)) {
             cout << "Ship placement failed!\n";
@@ -190,16 +214,20 @@ public:
 };
 class Player {
 private:
-    string name;
+    string _name;
     Board board;
     vector<Ship> ships;
     int ones = 0, twos = 0, threes = 0, fours = 0;
 
 public:
-    Player(const string& playerName) : name(playerName) {}
-
+    Player(const string& playerName)   {
+        setName(playerName);
+    }
+    void setName(string name){
+        _name=name;
+    }
     string getName() const {
-        return name;
+        return _name;
     }
 
     Board& getBoard() {
@@ -230,7 +258,7 @@ public:
         cout << "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  \n";
         cout << "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗\n";
         cout << "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝\n\n";
-        cout << name << " - Place your ships\n";
+        cout << _name << " - Place your ships\n";
         cout << "Use arrows to move | 'r' rotate | '1'-'4' to set ship length | Enter to place\n";
         cout << "Ship Length: " << shipLength << " | Direction: " << direction
              << " | Cursor: (" << x << ", " << y << ")\n";
@@ -302,7 +330,6 @@ int main() {
                     cout << "Miss\n";
                     currentPlayer = 3 - currentPlayer; 
             }
-            
             if (defender.getBoard().isGameOver()) {
                     cout << "\nAll ships sunk. " << attacker.getName() << " wins in - " << move << " moves\n";
                     break;
@@ -311,9 +338,6 @@ int main() {
             cout << "Press any key to continue";
                 getKeyPress();
             }            
-
-            cout << "Press any key to continue";
-            getKeyPress();
         }
     }
 
