@@ -2,15 +2,12 @@
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
-
 #define KEY_UP 65
 #define KEY_DOWN 66
 #define KEY_RIGHT 67
 #define KEY_LEFT 68
 #define KEY_ENTER 10
-
 using namespace std;
-
 int getKeyPress() {
     struct termios oldt, newt;
     int ch;
@@ -29,7 +26,6 @@ int getKeyPress() {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     return ch;
 }
-
 class Board {
 private:
     vector<vector<string> > table;
@@ -169,10 +165,10 @@ public:
     }
 
     static bool place(Board& board, vector<Ship>& ships, int x, int y, int len, const string& direction,
-                      int& ones, int& twos, int& threes, int& fours) {
-        if ((len == 1 && ones >= 4) || (len == 2 && twos >= 3) ||
-            (len == 3 && threes >= 2) || (len == 4 && fours >= 1)) {
-            cout << "You can't place more ships of this length!\n";
+                      int& one, int& two, int& three, int& four) {
+        if ((len == 1 && one >= 4) || (len == 2 && two >= 3) ||
+            (len == 3 && three >= 2) || (len == 4 && four >= 1)) {
+            cout << "You can't place more ships of this length"<<endl;
             return false;
         }
 
@@ -182,7 +178,7 @@ public:
         else if (direction == "down") dx = 1;
         else if (direction == "up") dx = -1;
         else {
-            cout << "Invalid direction input.\n";
+            cout << "Invalid direction input"<<endl;
             return false;
         }
 
@@ -190,11 +186,11 @@ public:
             int nx = x + dx * i;
             int ny = y + dy * i;
             if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) {
-                cout << "Ship goes out of bounds.\n";
+                cout << "Ship goes out of bounds"<<endl;
                 return false;
             }
             if (board.getKey(nx, ny) == "#") {
-                cout << "Collision detected. Ship can't be placed.\n";
+                cout << "Collision detected. Ship can't be placed"<<endl;
                 return false;
             }
         }
@@ -205,10 +201,10 @@ public:
         }
 
         ships.emplace_back(x, y, len, isHorizontal);
-        if (len == 1) ones++;
-        else if (len == 2) twos++;
-        else if (len == 3) threes++;
-        else if (len == 4) fours++;
+        if (len == 1) one++;
+        else if (len == 2) two++;
+        else if (len == 3) three++;
+        else if (len == 4) four++;
         return true;
     }
 };
@@ -217,7 +213,7 @@ private:
     string _name;
     Board board;
     vector<Ship> ships;
-    int ones = 0, twos = 0, threes = 0, fours = 0;
+    int one = 0, two = 0, three = 0, four = 0;
 
 public:
     Player(const string& playerName)   {
@@ -239,7 +235,7 @@ public:
     }
 
     bool placeShip(int x, int y, int length, const string& direction) {
-        return Ship::place(board, ships, x, y, length, direction, ones, twos, threes, fours);
+        return Ship::place(board, ships, x, y, length, direction, one, two, three, four);
     }
 
     void displayBoard(int cursorX = -1, int cursorY = -1, int length=1 , const string& direction="right") const {
@@ -252,18 +248,17 @@ public:
 
     while (true) {
         system("clear");
-        cout << "    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗\n";
-        cout << "    ██╔════╝██║  ██║██║██╔══██╗    ██╔══██╗██║     ██╔══██╗██╔════╝██╔════╝\n";
-        cout << "    ███████╗███████║██║██████╔╝    ██████╔╝██║     ███████║██║     █████╗  \n";
-        cout << "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  \n";
-        cout << "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗\n";
-        cout << "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝\n\n";
-        cout << _name << " - Place your ships\n";
-        cout << "Use arrows to move | 'r' rotate | '1'-'4' to set ship length | Enter to place\n";
-        cout << "Ship Length: " << shipLength << " | Direction: " << direction
-             << " | Cursor: (" << x << ", " << y << ")\n";
+        cout <<"\033[34m"<<"    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗ " <<"\033[0m"<<endl;
+        cout <<"\033[34m"<< "    ██╔════╝██║  ██║██║██╔══██╗    ██╔══██╗██║     ██╔══██╗██╔════╝██╔════╝"<<"\033[0m"<<endl;
+        cout <<"\033[34m"<< "    ███████╗███████║██║██████╔╝    ██████╔╝██║     ███████║██║     █████╗  "<<"\033[0m"<<endl;
+        cout <<"\033[34m"<< "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  "<<"\033[0m"<<endl;
+        cout <<"\033[34m"<< "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗"<<"\033[0m"<<endl;
+        cout <<"\033[34m"<< "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝"<<"\033[0m"<<endl;
+        cout <<"\033[33m"<< _name << " - Place your ships\n";
+        cout <<"\033[33m"<< "Use arrows to move | 'r' rotate | '1'-'4' to set ship length | Enter to place\n";
+        cout <<"\033[33m"<< "Ship Length: " <<"\033[0m"<<"\033[36m"<< shipLength <<"\033[0m"<<"\033[33m"<< "  Direction: " <<"\033[0m"<<"\033[36m"<<direction<<"\033[0m"<<"\033[33m"<< "   Cursor: (" <<"\033[36m"<< x <<"\033[0m"<<"\033[33m"<<", "<<"\033[0m"<<"\033[36m"<< y <<"\033[0m"<<"\033[33m"<<")"<<"\033[0m"<<endl;
         printShipCount();
-        cout << "\n";
+        cout<<endl;
         displayBoard(x, y,shipLength,direction);
 
         int key = getKeyPress();
@@ -289,10 +284,10 @@ public:
 
 
     void printShipCount() const {
-        cout << "Placed Ships - 1x" << ones
-             << "  2x" << twos
-             << "  3x" << threes
-             << "  4x" << fours << "\n";
+        cout <<"\033[33m"<< "Placed Ships - 1x" <<"\033[0m"<<"\033[36m"<<one<<"\033[0m"
+             <<"\033[33m"<< "  2x" <<"\033[0m"<<"\033[36m"<<two<<"\033[0m"
+             <<"\033[33m"<< "  3x" <<"\033[0m"<<"\033[36m"<<three<<"\033[0m"
+             <<"\033[33m"<< "  4x" <<"\033[0m"<<"\033[36m"<<four <<"\033[0m"<<endl;
     }
 };
 int main() {
