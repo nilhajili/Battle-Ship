@@ -268,6 +268,7 @@ public:
     }
 };
 int main() {
+    int move = 0;
     Player player1("Nil");
     Player player2("Seid");
     player1.placeShips();
@@ -288,28 +289,32 @@ int main() {
 
         cout << attacker.getName() << "'s Turn - Use arrows to move, Enter to fire\n";
         defender.getBoard().displayBoard(x, y, 1, "right", "opponent");
-
         int key = getKeyPress();
         if (key == KEY_UP && x > 0) x--;
         else if (key == KEY_DOWN && x < 9) x++;
         else if (key == KEY_LEFT && y > 0) y--;
         else if (key == KEY_RIGHT && y < 9) y++;
         else if (key == KEY_ENTER) {
+            move++;  
             if (defender.getBoard().attack(x, y)) {
-                cout << "Hit!\n";
+                    cout << "Hit\n";
             } else {
-                cout << "Miss!\n";
-                currentPlayer = 3 - currentPlayer; 
+                    cout << "Miss\n";
+                    currentPlayer = 3 - currentPlayer; 
             }
-
+            
             if (defender.getBoard().isGameOver()) {
-                cout << "\nAll ships sunk! " << attacker.getName() << " wins!\n";
-                break;
+                    cout << "\nAll ships sunk. " << attacker.getName() << " wins in - " << move << " moves\n";
+                    break;
             }
+            
+            cout << "Press any key to continue";
+                getKeyPress();
+            }            
 
-            cout << "Press any key to continue...";
+            cout << "Press any key to continue";
             getKeyPress();
         }
     }
 
-}
+
