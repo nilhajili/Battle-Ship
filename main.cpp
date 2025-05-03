@@ -37,42 +37,50 @@ private:
     string emptyPick = "*";
     string shipPick = "\033[36m#\033[0m";
     string hitPick = "\033[32mS\033[0m";
-    string missPick= "\033[32mM\033[0m ";
+    string missPick= "\033[31mM\033[0m";
 
 public:
     Board() {
         table.resize(size, vector<string>(size, emptyPick));
     }
 
-    void displayBoard(int cursorX = -1, int cursorY = -1, int length=1, const string& direction="right" ) const {
+    void displayBoard(int cursorX = -1, int cursorY = -1, int length = 1,
+                const string& direction = "right", const string& mode = "owner") const {
         cout << "  ";
         for (int i = 0; i < size; ++i) {
-            cout << i << " ";
+        cout << i << " ";
         }
         cout << endl;
         for (int i = 0; i < size; ++i) {
-            cout << i << " ";
-            for (int j = 0; j < size; ++j) {
-                bool isCursor = false;
-                for (int k = 0; k < length; ++k) {
-                    int nx = cursorX, ny = cursorY;
-                    if (direction == "right") ny = cursorY + k;
-                    else if (direction == "left") ny = cursorY - (length - 1) + k;
-                    else if (direction == "down") nx = cursorX + k;
-                    else if (direction == "up") nx = cursorX - (length - 1) + k;
-                    if (i == nx && j == ny) {
-                        isCursor = true;
-                        break;
-                    }
-                }
-                if (isCursor)
-                    cout <<"\033[35m"<< "&" <<' '<< "\033[0m";
-                else
-                    cout << table[i][j] << " ";
+        cout << i << " ";
+        for (int j = 0; j < size; ++j) {
+        bool isCursor = false;
+        for (int k = 0; k < length; ++k) {
+            int nx = cursorX, ny = cursorY;
+            if (direction == "right") ny = cursorY + k;
+            else if (direction == "left") ny = cursorY - (length - 1) + k;
+            else if (direction == "down") nx = cursorX + k;
+            else if (direction == "up") nx = cursorX - (length - 1) + k;
+            if (i == nx && j == ny) {
+                isCursor = true;
+                break;
             }
-            cout << endl;
         }
-    }    
+
+        string cell = table[i][j];
+
+        if (mode == "opponent" && cell == shipPick)
+            cell = emptyPick;
+
+        if (isCursor)
+            cout << "\033[35m" << "+" << ' ' << "\033[0m";
+        else
+            cout << cell << " ";
+        }
+        cout << endl;
+        }
+        }
+
     string getCell(int x, int y) const {
         return table[x][y];
     }
@@ -101,22 +109,24 @@ public:
         }
         return true;
     }
-
     bool attack(int x, int y) {
+        if (x < 0 || x >= size || y < 0 || y >= size)
+            return false;
+    
         if (table[x][y] == shipPick) {
             table[x][y] = hitPick;
             return true;
         } else if (table[x][y] == emptyPick) {
             table[x][y] = missPick;
-            return false;
         }
         return false;
     }
-
+    
     bool isGameOver() const {
         for (const auto& row : table) {
-            for (const auto& pick : row) {
-                if (pick == shipPick) return false;
+            for (const auto& cell : row) {
+                if (cell == shipPick)
+                    return false;
             }
         }
         return true;
@@ -207,14 +217,6 @@ public:
     void displayBoard(int cursorX = -1, int cursorY = -1, int length=1 , const string& direction="right") const {
        board.displayBoard(cursorX, cursorY, length,direction);
     }
-
-    bool attack(Player& opponent, int x, int y) {
-        return opponent.board.attack(x, y);
-    }
-
-    bool hasLost() const {
-        return board.isGameOver();
-    }
     void placeShips() {
     int x = 0, y = 0;
     string direction = "right";
@@ -266,10 +268,48 @@ public:
     }
 };
 int main() {
-    Player player1("Player 1");
-    Player player2("Player 2");
+    Player player1("Nil");
+    Player player2("Seid");
     player1.placeShips();
     cout << "\nPlayer 1 done. Press any key to switch to Player 2...";
     getKeyPress();
+    system("clear");
+
     player2.placeShips();
+    cout << "\nPlayer 2 done. Press any key to start the game...";
+    getKeyPress();
+
+    int currentPlayer = 1;
+    int x = 0, y = 0;
+    while (true) {
+        system("clear");
+        Player& attacker = (currentPlayer == 1) ? player1 : player2;
+        Player& defender = (currentPlayer == 1) ? player2 : player1;
+
+        cout << attacker.getName() << "'s Turn - Use arrows to move, Enter to fire\n";
+        defender.getBoard().displayBoard(x, y, 1, "right", "opponent");
+
+        int key = getKeyPress();
+        if (key == KEY_UP && x > 0) x--;
+        else if (key == KEY_DOWN && x < 9) x++;
+        else if (key == KEY_LEFT && y > 0) y--;
+        else if (key == KEY_RIGHT && y < 9) y++;
+        else if (key == KEY_ENTER) {
+            if (defender.getBoard().attack(x, y)) {
+                cout << "Hit!\n";
+            } else {
+                cout << "Miss!\n";
+                currentPlayer = 3 - currentPlayer; 
+            }
+
+            if (defender.getBoard().isGameOver()) {
+                cout << "\nAll ships sunk! " << attacker.getName() << " wins!\n";
+                break;
+            }
+
+            cout << "Press any key to continue...";
+            getKeyPress();
+        }
+    }
+
 }
