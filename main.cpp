@@ -482,8 +482,8 @@ class Bot : public Player {
         }
         
         Position chooseTarget() {
-            if (!hitTargets.empty()) {
-                Position lastHit = hitTargets.back();
+            for (auto it = hitTargets.rbegin(); it != hitTargets.rend(); ++it) {
+                Position lastHit = *it;
                 vector<Position> directions = {
                     {0, 1}, {1, 0}, {0, -1}, {-1, 0}
                 };
@@ -492,25 +492,20 @@ class Bot : public Player {
                     int nx = lastHit.x + dir.x;
                     int ny = lastHit.y + dir.y;
                     if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && !wasAttacked(nx, ny)) {
-                        Position pos;
-                        pos.x = nx;
-                        pos.y = ny;
-                        return pos;
+                        return {nx, ny};
                     }
                 }
             }
-            
-          
             int x, y;
+            int tries = 0;
             do {
                 x = rand() % 10;
                 y = rand() % 10;
+                tries++;
+                if (tries > 100) break; 
             } while (wasAttacked(x, y));
             
-            Position pos;
-            pos.x = x;
-            pos.y = y;
-            return pos;
+            return {x, y};
         }
     
         bool performAttack(Board& opponentBoard) {
