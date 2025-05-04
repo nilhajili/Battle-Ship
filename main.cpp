@@ -14,6 +14,20 @@ struct Position {
     int x;
     int y;
 };
+int getch() {
+    struct termios oldt, newt;
+    int ch;
+    
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    
+    return ch;
+}
 int getKeyPress() {
     struct termios oldt, newt;
     int ch;
@@ -180,59 +194,30 @@ public:
         return _positions;
     }
 
-    static bool place(Board& board, vector<Ship>& ships, int x, int y, int len, const string& direction,
-                      int& one, int& two, int& three, int& four) {
-        if ((len == 1 && one >= 4) || (len == 2 && two >= 3) ||
-            (len == 3 && three >= 2) || (len == 4 && four >= 1)) {
-            cout << "You can't place more ships of this length"<<endl;
-            return false;
-        }
-
-        int dx = 0, dy = 0;
-        if (direction == "right") dy = 1;
-        else if (direction == "left") dy = -1;
-        else if (direction == "down") dx = 1;
-        else if (direction == "up") dx = -1;
-        else {
-            cout << "Invalid direction input"<<endl;
-            return false;
-        }
-
-        for (int i = 0; i < len; ++i) {
-            int nx = x + dx * i;
-            int ny = y + dy * i;
-            if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) {
-                cout << "Ship goes out of bounds"<<endl;
-                return false;
-            }
-            if (board.getKey(nx, ny) == "#") {
-                cout << "Collision detected. Ship can't be placed"<<endl;
-                return false;
-            }
-        }
-        bool isHorizontal = (dx == 0);
-        if (!board.placeShip(x, y, len, isHorizontal)) {
+    
+            bool isHorizontal = (dx == 0);
+            if (!board.placeShip(x, y, len, isHorizontal)) {
             cout << "Ship placement failed!\n";
             return false;
-        }
-
-        ships.emplace_back(x, y, len, isHorizontal);
-        if (len == 1) one++;
-        else if (len == 2) two++;
-        else if (len == 3) three++;
-        else if (len == 4) four++;
-        return true;
-    }
-    bool isSunk(const Board& board) const {
-        for (const auto& pos : _positions) {
-            if (board.getKey(pos.x, pos.y) != "\033[32mS\033[0m") {
-                return false;  
             }
-        }
-        return true;
-    }
-    
-};
+
+            ships.emplace_back(x, y, len, isHorizontal);
+            if (len == 1) one++;
+            else if (len == 2) two++;
+            else if (len == 3) three++;
+            else if (len == 4) four++;
+            return true;
+            }
+                bool isSunk(const Board& board) const {
+                    for (const auto& pos : _positions) {
+                        if (board.getKey(pos.x, pos.y) != "\033[32mS\033[0m") {
+                            return false;  
+                        }
+                    }
+                    return true;
+                }
+                
+            };
 class Player {
 private:
     string _name;
@@ -482,114 +467,175 @@ class Bot : public Player {
         }
     };
     int main() {
-        int move = 0;
-        Player player1("Player 1");
-        Bot bot("Bot");
-        player1.placeShips();
-        cout << "\nPlayer 1 done. Press any key to start the game.";
-        getKeyPress();
-        system("clear");
-        bot.placeShips();
-        cout << "\nBot done. Press any key to start the game.";
-        getKeyPress();
-        int currentPlayer = 1;  
-        int x = 0, y = 0;
+        int secim = 0;
         while (true) {
             system("clear");
-            Player& attacker = (currentPlayer == 1) ? player1 : bot;
-            Player& defender = (currentPlayer == 1) ? bot : player1;
-            cout << attacker.getName() << "'s Turn. Press Enter to fire\n";
-            cout << "Player's Board:               Bot's Board:\n";
-            for (int i = 0; i < 10; ++i) {
-                for (int j = 0; j < 10; ++j) {
-                    cout << player1.getBoard().getKey(i, j) << " ";
-                }
-                cout << "         ";
-                for (int j = 0; j < 10; ++j) {
-                    if (i == x && j == y) {
-                        cout << "\033[7m"; 
-                    }
-        
-                    string cell = bot.getBoard().getKey(i, j);
-                    if (cell == "\033[36m#\033[0m")  
-                        cout << "*";
-                    else
-                        cout << cell;
-        
-                    if (i == x && j == y) {
-                        cout << "\033[0m";
-                    }
-                    cout << " ";
-                }
-                cout <<endl;
+            cout << "\033[34m" << "    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗ " << "\033[0m" << endl;
+            cout << "\033[34m" << "    ██╔════╝██║  ██║██║██╔══██╗    ██╔══██╗██║     ██╔══██╗██╔════╝██╔════╝" << "\033[0m" << endl;
+            cout << "\033[34m" << "    ███████╗███████║██║██████╔╝    ██████╔╝██║     ███████║██║     █████╗  " << "\033[0m" << endl;
+            cout << "\033[34m" << "    ╚════██║██╔══██║██║██╔═══╝     ██╔═══╝ ██║     ██╔══██║██║     ██╔══╝  " << "\033[0m" << endl;
+            cout << "\033[34m" << "    ███████║██║  ██║██║██║         ██║     ███████╗██║  ██║╚██████╗███████╗" << "\033[0m" << endl;
+            cout << "\033[34m" << "    ╚══════╝╚═╝  ╚═╝╚═╝╚═╝         ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝" << "\033[0m" << endl;
+    
+            string options[] = {
+                "1. Bot vs Player",
+                "2. Player vs Player",
+                "3. Bot vs Bot",
+                "4. Exit"
+            };
+    
+            for (int i = 0; i < 4; ++i) {
+                if (i == secim)
+                    cout << "\033[32m > " << options[i] << "\033[0m" << endl;
+                else
+                    cout << "   " << options[i] << endl;
             }
-        
-            if (currentPlayer == 1) {
-                cout << "\nUse arrow keys to move, Enter to attack. Cursor at (" << x << ", " << y << ")\n";
-                int key = getKeyPress();
-                if (key == KEY_UP && x > 0) x--;
-                else if (key == KEY_DOWN && x < 9) x++;
-                else if (key == KEY_LEFT && y > 0) y--;
-                else if (key == KEY_RIGHT && y < 9) y++;
-                else if (key == KEY_ENTER) {
-                    if (bot.getBoard().getKey(x, y) != "\033[32mS\033[0m" && bot.getBoard().getKey(x, y) != "\033[31mM\033[0m") {
-                        bool hit = bot.getBoard().attack(x, y);
-
-                        if (hit) {
-                            cout << "\n\033[32mHit!\033[0m\n";
-                            bot.checkSunkShips(x, y);  
-                            cout << "Press any key to continue...\n";
-                            getKeyPress();
-                            continue;
-                        } else {
-                            cout << "\n\033[31mMiss!\033[0m\n";
-                            currentPlayer = 2;
-                            cout << "Press any key to continue...\n";
+    
+            int c = getch();
+            if (c == 27) { 
+                int c1 = getch();
+                if (c1 == 91) {
+                    int c2 = getch();
+                    switch (c2) {
+                        case KEY_UP:
+                            secim = (secim > 0) ? secim - 1 : 3;
+                            break;
+                        case KEY_DOWN:
+                            secim = (secim < 3) ? secim + 1 : 0;
+                            break;
+                    }
+                }
+            }
+            else if (c == KEY_ENTER) {
+                switch (secim) {
+                    case 0: {
+                        // Bot vs Player
+                        Player player1("Player 1");
+                        Bot bot("Bot");
+    
+                        player1.placeShips();
+                        cout << "\nPlayer 1 done. Press any key to start the game.";
+                        getKeyPress();
+                        system("clear");
+    
+                        bot.placeShips();
+                        cout << "\nBot done. Press any key to start the game.";
+                        getKeyPress();
+    
+                        int currentPlayer = 1;
+                        int x = 0, y = 0;
+                        while (true) {
+                            system("clear");
+                            Player& attacker = (currentPlayer == 1) ? player1 : bot;
+                            Player& defender = (currentPlayer == 1) ? bot : player1;
+                            cout << attacker.getName() << "'s Turn. Press Enter to fire\n";
+                            cout << "Player's Board:               Bot's Board:\n";
+    
+                            // Print the boards
+                            for (int i = 0; i < 10; ++i) {
+                                for (int j = 0; j < 10; ++j) {
+                                    cout << player1.getBoard().getKey(i, j) << " ";
+                                }
+                                cout << "         ";
+                                for (int j = 0; j < 10; ++j) {
+                                    if (i == x && j == y) {
+                                        cout << "\033[7m";
+                                    }
+    
+                                    string cell = bot.getBoard().getKey(i, j);
+                                    if (cell == "\033[36m#\033[0m")
+                                        cout << "*";
+                                    else
+                                        cout << cell;
+    
+                                    if (i == x && j == y) {
+                                        cout << "\033[0m";
+                                    }
+                                    cout << " ";
+                                }
+                                cout << endl;
+                            }
+    
+                            // Player turn logic
+                            if (currentPlayer == 1) {
+                                cout << "\nUse arrow keys to move, Enter to attack. Cursor at (" << x << ", " << y << ")\n";
+                                int key = getKeyPress();
+                                if (key == KEY_UP && x > 0) x--;
+                                else if (key == KEY_DOWN && x < 9) x++;
+                                else if (key == KEY_LEFT && y > 0) y--;
+                                else if (key == KEY_RIGHT && y < 9) y++;
+                                else if (key == KEY_ENTER) {
+                                    if (bot.getBoard().getKey(x, y) != "\033[32mS\033[0m" && bot.getBoard().getKey(x, y) != "\033[31mM\033[0m") {
+                                        bool hit = bot.getBoard().attack(x, y);
+                                        if (hit) {
+                                            cout << "\n\033[32mHit!\033[0m\n";
+                                            bot.checkSunkShips(x, y);
+                                            cout << "Press any key to continue...\n";
+                                            getKeyPress();
+                                            continue;
+                                        } else {
+                                            cout << "\n\033[31mMiss!\033[0m\n";
+                                            currentPlayer = 2;
+                                            cout << "Press any key to continue...\n";
+                                            getKeyPress();
+                                        }
+                                        sleep(1);
+                                        if (bot.getBoard().isGameOver()) {
+                                            cout << "You won!\n";
+                                            break;
+                                        }
+                                        currentPlayer = 2;
+                                    } else {
+                                        cout << "Already attacked this position\n";
+                                        sleep(1);
+                                    }
+                                }
+                            } else {
+                                // Bot's turn
+                                cout << "\nBot is attacking\n";
+                                sleep(1);
+                                bool hit = bot.performAttack(player1.getBoard());
+                                if (hit) {
+                                    cout << "Player hit a ship\n";
+                                    sleep(1);
+                                    continue;
+                                } else {
+                                    cout << "Bot missed\n";
+                                }
+    
+                                // After bot's attack display the board
+                                cout << "\nAfter bot's attack:\n";
+                                for (int i = 0; i < 10; ++i) {
+                                    for (int j = 0; j < 10; ++j) {
+                                        cout << player1.getBoard().getKey(i, j) << " ";
+                                    }
+                                    cout << endl;
+                                }
+                                if (player1.getBoard().isGameOver()) {
+                                    cout << "\nBot won!\n";
+                                    break;
+                                }
+                                currentPlayer = 1;
+                            }
+    
+                            cout << "\nPress any key to continue.\n";
                             getKeyPress();
                         }
-                        sleep(1);
-                        if (bot.getBoard().isGameOver()) {
-                            cout << "You won!\n";
-                            break; 
-                        }
-                        currentPlayer = 2;
-                    } else {
-                        cout << "Already attacked this position"<<endl;
-                        sleep(1);
+                        break;
                     }
+    
+                    case 1:
+                        // Player vs Player logic here
+                        break;
+    
+                    case 2:
+                        // Bot vs Bot logic here
+                        break;
+    
+                    case 3:
+                        cout << "Exiting the game...\n";
+                        return 0;
                 }
-            } else { 
-                cout << "\nBot is attacking\n";
-                sleep(1);
-                bool hit = bot.performAttack(player1.getBoard()); 
-                if (hit) {
-                    cout << "Player hit a ship"<<endl;
-                    sleep(1);
-                    
-                    continue;
-                } else {
-                    cout << "Bot missed"<<endl;
-                }
-                
-                cout << "\nAfter bot's attack:\n";
-                for (int i = 0; i < 10; ++i) {
-                    for (int j = 0; j < 10; ++j) {
-                        cout << player1.getBoard().getKey(i, j) << " ";
-                    }
-                    cout << endl;
-                }
-                if (player1.getBoard().isGameOver()) {
-                    cout << "\nBot won!\n";
-                    break; 
-                }
-                currentPlayer = 1;
             }
-        
-            cout << "\nPress any key to continue.\n";
-            getKeyPress();  
         }
-    
-        cout << "Game over. Press any key to exit.\n";
-        getKeyPress();
     }
-    
