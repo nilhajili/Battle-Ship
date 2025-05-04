@@ -705,13 +705,14 @@ class Bot : public Player {
                     
                         int currentPlayer = 1;
                         int x = 0, y = 0;
-                        int move = 0;
                     
+                        int moveCount = 0;  
+
                         while (true) {
                             system("clear");
                             Player& attacker = (currentPlayer == 1) ? player1 : player2;
                             Player& defender = (currentPlayer == 1) ? player2 : player1;
-                    
+
                             cout << attacker.getName() << "'s Turn. Press Enter to fire.\n";
                             defender.getBoard().displayBoard(x, y, 1, "right", "opponent");
                             int key = getKeyPress();
@@ -724,23 +725,25 @@ class Bot : public Player {
                                 if (hit) {
                                     cout << "\n\033[32mHit!\033[0m\n";
                                     defender.checkSunkShips(x, y);  
+                                    moveCount++;  
                                 } else {
                                     cout << "\n\033[31mMiss!\033[0m\n";
                                     currentPlayer = 3 - currentPlayer;
+                                    moveCount++;  
                                 }
-                    
+
                                 if (defender.getBoard().isGameOver()) {
-                                    cout << "\nAll ships sunk. \033[36m" << attacker.getName() << "\033[0m wins in " <<endl;
+                                    cout << "\nAll ships sunk. \033[36m" << attacker.getName() << "\033[0m wins!\n";
+                                    cout << "Total moves: " << moveCount << endl;  
                                     cout << "Press any key to exit...\n";
                                     getKeyPress();  
                                     break;
                                 }
-                    
+
                                 cout << "Press any key to continue...";
                                 getKeyPress();
                             }
                         }
-                        break;
                     }
     
                     case 2: {
