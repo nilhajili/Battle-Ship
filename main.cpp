@@ -496,6 +496,7 @@ class Bot : public Player {
                     }
                 }
             }
+        
             int x, y;
             int tries = 0;
             do {
@@ -504,7 +505,7 @@ class Bot : public Player {
                 tries++;
                 if (tries > 100) break; 
             } while (wasAttacked(x, y));
-            
+        
             return {x, y};
         }
     
@@ -527,6 +528,7 @@ class Bot : public Player {
     };
     int main() {
         int secim = 0;
+
         while (true) {
             system("clear");
             cout << "\033[34m" << "    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗ " << "\033[0m" << endl;
@@ -582,13 +584,14 @@ class Bot : public Player {
     
                         int currentPlayer = 1;
                         int x = 0, y = 0;
+                        int moveCount = 0; 
                         while (true) {
                             system("clear");
                             Player& attacker = (currentPlayer == 1) ? player1 : bot;
                             Player& defender = (currentPlayer == 1) ? bot : player1;
                             cout << attacker.getName() << "'s Turn. Press Enter to fire\n";
                             cout << "Player's Board:               Bot's Board:\n";
-
+                        
                             for (int i = 0; i < 10; ++i) {
                                 for (int j = 0; j < 10; ++j) {
                                     cout << player1.getBoard().getKey(i, j) << " ";
@@ -598,13 +601,13 @@ class Bot : public Player {
                                     if (i == x && j == y) {
                                         cout << "\033[7m";
                                     }
-    
+                        
                                     string cell = bot.getBoard().getKey(i, j);
                                     if (cell == "\033[36m#\033[0m")
                                         cout << "*";
                                     else
                                         cout << cell;
-    
+                        
                                     if (i == x && j == y) {
                                         cout << "\033[0m";
                                     }
@@ -612,6 +615,7 @@ class Bot : public Player {
                                 }
                                 cout << endl;
                             }
+                        
                             if (currentPlayer == 1) {
                                 cout << "\nUse arrow keys to move, Enter to attack. Cursor at (" << x << ", " << y << ")\n";
                                 int key = getKeyPress();
@@ -625,11 +629,13 @@ class Bot : public Player {
                                         if (hit) {
                                             cout << "\n\033[32mHit!\033[0m\n";
                                             bot.checkSunkShips(x, y);
+                                            moveCount++; 
                                             cout << "Press any key to continue...\n";
                                             getKeyPress();
                                             continue;
                                         } else {
                                             cout << "\n\033[31mMiss!\033[0m\n";
+                                            moveCount++; 
                                             currentPlayer = 2;
                                             cout << "Press any key to continue...\n";
                                             getKeyPress();
@@ -651,12 +657,13 @@ class Bot : public Player {
                                 bool hit = bot.performAttack(player1.getBoard());
                                 if (hit) {
                                     cout << "Player hit a ship\n";
+                                    moveCount++;  
                                     sleep(1);
                                     continue;
                                 } else {
                                     cout << "Bot missed\n";
                                 }
-    
+                        
                                 cout << "\nAfter bot's attack:\n";
                                 for (int i = 0; i < 10; ++i) {
                                     for (int j = 0; j < 10; ++j) {
@@ -670,11 +677,11 @@ class Bot : public Player {
                                 }
                                 currentPlayer = 1;
                             }
-    
+                            cout << "\nTotal moves: " << moveCount << endl;
+                        
                             cout << "\nPress any key to continue.\n";
                             getKeyPress();
                         }
-                        break;
                     }
     
                     case 1: {
