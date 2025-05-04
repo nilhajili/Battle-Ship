@@ -136,6 +136,7 @@ public:
 };
 class Ship {
 private:
+    vector<Position> _positions;
     int _x, _y, _len, _hitsTaken;
     bool _isHorizontal;
 public:
@@ -144,6 +145,12 @@ public:
         setY(y);
         setLen(len);
         setIsHorizontal(horizontal);
+        for (int i = 0; i < len; ++i) {
+            Position pos;
+            pos.x = x + (horizontal ? 0 : i);
+            pos.y = y + (horizontal ? i : 0);
+            _positions.push_back(pos);
+        }
     }
     void setX(int x){
         _x=x;
@@ -168,6 +175,9 @@ public:
     }
     bool getIsHorizontal(){
         return _isHorizontal;
+    }
+    vector<Position> getPositions() const {
+        return _positions;
     }
 
     static bool place(Board& board, vector<Ship>& ships, int x, int y, int len, const string& direction,
@@ -213,6 +223,15 @@ public:
         else if (len == 4) four++;
         return true;
     }
+    bool isSunk(const Board& board) const {
+        for (const auto& pos : _positions) {
+            if (board.getKey(pos.x, pos.y) != "\033[32mS\033[0m") {
+                return false;  
+            }
+        }
+        return true;
+    }
+    
 };
 class Player {
 private:
@@ -246,6 +265,24 @@ public:
 
     void displayBoard(int cursorX = -1, int cursorY = -1, int length=1 , const string& direction="right") const {
        board.displayBoard(cursorX, cursorY, length,direction);
+    }
+    void checkSunkShips(int x, int y) const {
+        for (const auto& ship : ships) {
+            for (const auto& pos : ship.getPositions()) {
+                if (pos.x == x && pos.y == y) {
+                    if (ship.isSunk(board)) {
+                        cout << "\033[31mShip is completely sunk!\033[0m\n";
+                        cout << "Press any key to continue...\n";
+                        getKeyPress();
+                    } else {
+                        cout << "\033[33mHit, but ship is still afloat.\033[0m\n";
+                        cout << "Press any key to continue...\n";
+                        getKeyPress();
+                    }
+                    return;
+                }
+            }
+        }
     }
     void placeShips() {
     int x = 0, y = 0;
@@ -497,11 +534,18 @@ class Bot : public Player {
                 else if (key == KEY_ENTER) {
                     if (bot.getBoard().getKey(x, y) != "\033[32mS\033[0m" && bot.getBoard().getKey(x, y) != "\033[31mM\033[0m") {
                         bool hit = bot.getBoard().attack(x, y);
+
                         if (hit) {
-                            cout << "Player hit your ship!\n";
-                            continue; 
+                            cout << "\n\033[32mHit!\033[0m\n";
+                            bot.checkSunkShips(x, y);  
+                            cout << "Press any key to continue...\n";
+                            getKeyPress();
+                            continue;
                         } else {
-                            cout << "Player missed!\n";
+                            cout << "\n\033[31mMiss!\033[0m\n";
+                            currentPlayer = 2;
+                            cout << "Press any key to continue...\n";
+                            getKeyPress();
                         }
                         sleep(1);
                         if (bot.getBoard().isGameOver()) {
@@ -510,19 +554,21 @@ class Bot : public Player {
                         }
                         currentPlayer = 2;
                     } else {
-                        cout << "Already attacked this position. Try again.\n";
+                        cout << "Already attacked this position"<<endl;
                         sleep(1);
                     }
                 }
             } else { 
-                cout << "\nBot is attacking...\n";
+                cout << "\nBot is attacking\n";
                 sleep(1);
                 bool hit = bot.performAttack(player1.getBoard()); 
                 if (hit) {
-                    cout << "Bot hit your ship!\n";
-                    continue; 
+                    cout << "Player hit a ship"<<endl;
+                    sleep(1);
+                    
+                    continue;
                 } else {
-                    cout << "Bot missed!\n";
+                    cout << "Bot missed"<<endl;
                 }
                 
                 cout << "\nAfter bot's attack:\n";
