@@ -1,7 +1,7 @@
 #include <iostream>
 #include <termios.h>
 #include <unistd.h>
-
+#include <stdexcept> 
 #include <vector>
 #include <utility>
 #define KEY_UP 65
@@ -48,75 +48,91 @@ int getKeyPress() {
 }
 class Board {
 private:
-    vector<vector<string> > table;
+    vector<vector<string>> table;
     const int size = 10;
     string emptyPick = "*";
     string shipPick = "\033[36m#\033[0m";
     string hitPick = "\033[32mS\033[0m";
-    string missPick= "\033[31mM\033[0m";
+    string missPick = "\033[31mM\033[0m";
 
 public:
     Board() {
         table.resize(size, vector<string>(size, emptyPick));
     }
+
     void displayBoard(int cursorX = -1, int cursorY = -1, int length = 1,
         const string& direction = "right", const string& mode = "owner") const {
         cout << "  ";
         for (int i = 0; i < size; ++i) {
-        cout << i << " ";
+            cout << i << " ";
         }
         cout << endl;
 
         for (int i = 0; i < size; ++i) {
-        cout << i << " ";
-        for (int j = 0; j < size; ++j) {
-            bool isCursor = false;
-            for (int k = 0; k < length; ++k) {
-                int xx = cursorX, yy = cursorY;
-                if (direction == "right") yy = cursorY + k;
-                else if (direction == "left") yy = cursorY - (length - 1) + k;
-                else if (direction == "down") xx = cursorX + k;
-                else if (direction == "up") xx = cursorX - (length - 1) + k;
-                if (i == xx && j == yy) {
-                    isCursor = true;
-                    break;
+            cout << i << " ";
+            for (int j = 0; j < size; ++j) {
+                bool isCursor = false;
+                for (int k = 0; k < length; ++k) {
+                    int xx = cursorX, yy = cursorY;
+                    if (direction == "right") yy = cursorY + k;
+                    else if (direction == "left") yy = cursorY - (length - 1) + k;
+                    else if (direction == "down") xx = cursorX + k;
+                    else if (direction == "up") xx = cursorX - (length - 1) + k;
+                    if (i == xx && j == yy) {
+                        isCursor = true;
+                        break;
+                    }
                 }
-            }
 
-            string cell = table[i][j];
-            if (mode == "opponent" && cell == shipPick) {
-                cell = emptyPick;
-            }
+                string cell = table[i][j];
+                if (mode == "opponent" && cell == shipPick) {
+                    cell = emptyPick;
+                }
 
-            if (isCursor)
-                cout << "\033[35m" << "+" << ' ' << "\033[0m";
-            else
-                cout << cell << " ";
+                if (isCursor)
+                    cout << "\033[35m" << "+" << ' ' << "\033[0m";
+                else
+                    cout << cell << " ";
+            }
+            cout << endl;
         }
-        cout << endl;
-        }
-}
+    }
 
     string getKey(int x, int y) const {
+        if (x < 0 || x >= size || y < 0 || y >= size) {
+            throw out_of_range("Invalid coordinates in getKey");
+        }
         return table[x][y];
     }
 
     bool placeShip(int x, int y, int length, bool isHorizontal) {
+        if (x < 0 || x >= size || y < 0 || y >= size) {
+            throw out_of_range("Invalid coordinates in placeShip");
+        }
+
         if (isHorizontal) {
-            if (y + length > size) return false;
+            if (y + length > size) {
+                throw invalid_argument("Ship does not fit horizontally");
+            }
 
             for (int i = y; i < y + length; ++i) {
-                if (table[x][i] == shipPick) return false;
+                if (table[x][i] == shipPick) {
+                    throw invalid_argument("Ship overlap detected");
+                }
             }
 
             for (int i = y; i < y + length; ++i) {
                 table[x][i] = shipPick;
             }
         } else {
-            if (x + length > size) return false;
+            if (x + length > size) {
+                throw invalid_argument("Ship does not fit vertically");
+            }
 
             for (int i = x; i < x + length; ++i) {
-                if (table[i][y] == shipPick) return false;
+                if (table[i][y] == shipPick) {
+                    throw invalid_argument("Ship overlap detected");
+                }
             }
 
             for (int i = x; i < x + length; ++i) {
@@ -125,10 +141,12 @@ public:
         }
         return true;
     }
+
     bool attack(int x, int y) {
-        if (x < 0 || x >= size || y < 0 || y >= size)
-            return false;
-    
+        if (x < 0 || x >= size || y < 0 || y >= size) {
+            throw out_of_range("Invalid coordinates in attack");
+        }
+
         if (table[x][y] == shipPick) {
             table[x][y] = hitPick;
             return true;
@@ -137,12 +155,13 @@ public:
         }
         return false;
     }
-    
+
     bool isGameOver() const {
         for (const auto& row : table) {
             for (const auto& cell : row) {
-                if (cell == shipPick)
+                if (cell == shipPick) {
                     return false;
+                }
             }
         }
         return true;
@@ -761,31 +780,35 @@ class Bot : public Player {
                     
                         int currentPlayer = 1;
                     
+                        int moveCount = 0;  
+
                         while (true) {
                             system("clear");
                             Bot& attacker = (currentPlayer == 1) ? bot1 : bot2;
                             Bot& defender = (currentPlayer == 1) ? bot2 : bot1;
-                    
+
                             cout << attacker.getName() << "'s Turn.\n";
-                    
+
                             Position target = attacker.chooseTarget();
                             cout << attacker.getName() << " attacks at (" << target.x << ", " << target.y << ")\n";
-                    
+
                             bool hit = defender.getBoard().attack(target.x, target.y);
                             if (hit) {
                                 cout << "Hit!\n";
                                 defender.checkSunkShips(target.x, target.y);
-                            
+                                moveCount++; 
+
                                 if (defender.getBoard().isGameOver()) {
                                     cout << "\n\033[36m" << attacker.getName() << "\033[0m wins!\n";
+                                    cout << "Total moves: " << moveCount << endl;  
                                     break;
                                 }
-                            
+
                                 continue;
                             } else {
                                 cout << "Miss\n";
                             }
-                    
+
                             cout << "\n" << bot1.getName() << "'s Board:               " << bot2.getName() << "'s Board:\n";
                             for (int i = 0; i < 10; ++i) {
                                 for (int j = 0; j < 10; ++j) {
@@ -797,19 +820,17 @@ class Bot : public Player {
                                 }
                                 cout << endl;
                             }
-                    
                             if (defender.getBoard().isGameOver()) {
                                 cout << "\n\033[36m" << attacker.getName() << "\033[0m wins!\n";
+                                cout << "Total moves: " << moveCount << endl; 
                                 break;
                             }
-                    
+
                             currentPlayer = 3 - currentPlayer;
-                    
+
                             cout << "\nPress any key to continue...\n";
                             getKeyPress();
                         }
-                    
-                        break;
                     }
                     case 3:
                         cout << "Exiting the game...\n";
