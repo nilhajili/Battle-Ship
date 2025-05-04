@@ -396,6 +396,74 @@ class Bot : public Player {
                 }
             }
         }
+        Position chooseTarget() {
+            if (!hitTargets.empty()) {
+                Position lastHit = hitTargets.back();
+                vector<Position> directions = {
+                    {0, 1}, {1, 0}, {0, -1}, {-1, 0}  
+                };
+                for (const auto& dir : directions) {
+                    int nx = lastHit.x + dir.x;
+                    int ny = lastHit.y + dir.y;
+                    if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && !wasAttacked(nx, ny)) {
+                        Position pos = {nx, ny};
+                        return pos;
+                    }
+                }
+                return getRandomTarget();
+            }
+            return getRandomTarget();
+        }
+        
+        Position getRandomTarget() {
+            vector<Position> possibleTargets;
+            for (int x = 0; x < 10; ++x) {
+                for (int y = 0; y < 10; ++y) {
+                    if (!wasAttacked(x, y)) {
+                        possibleTargets.push_back({x, y});
+                    }
+                }
+            }
+            if (!possibleTargets.empty()) {
+                return possibleTargets[rand() % possibleTargets.size()];
+            }
+            int x = rand() % 10;
+            int y = rand() % 10;
+            return {x, y};
+        }      
+        void performAttack(Board& opponentBoard) {
+            Position target = chooseTarget();
+            attackHistory.push_back(target);
+            cout << getName() << " attacks at (" << target.x << ", " << target.y << ")\n";
+            bool hit = opponentBoard.attack(target.x, target.y);
+        
+            if (hit) {
+                cout << "Hit!\n";
+                hitTargets.push_back(target);  
+                followUpAttack(target);
+            } else {
+                cout << "Miss\n";
+            }
+        
+            sleep(1);
+        }
+        
+        void followUpAttack(Position lastHit) {
+           
+            vector<Position> directions = {
+                {0, 1}, {1, 0}, {0, -1}, {-1, 0} 
+            };
+        
+            for (const auto& dir : directions) {
+                int nx = lastHit.x + dir.x;
+                int ny = lastHit.y + dir.y;
+                if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && !wasAttacked(nx, ny)) {
+                    attackHistory.push_back({nx, ny});
+                    cout << getName() << " follows up attack at (" << nx << ", " << ny << ")\n";
+                    break;  \
+                }
+            }
+        }
         
         
     };
