@@ -555,7 +555,6 @@ class Bot : public Player {
             else if (c == KEY_ENTER) {
                 switch (secim) {
                     case 0: {
-                        // Bot vs Player
                         Player player1("Player 1");
                         Bot bot("Bot");
     
@@ -576,8 +575,7 @@ class Bot : public Player {
                             Player& defender = (currentPlayer == 1) ? bot : player1;
                             cout << attacker.getName() << "'s Turn. Press Enter to fire\n";
                             cout << "Player's Board:               Bot's Board:\n";
-    
-                            // Print the boards
+
                             for (int i = 0; i < 10; ++i) {
                                 for (int j = 0; j < 10; ++j) {
                                     cout << player1.getBoard().getKey(i, j) << " ";
@@ -601,8 +599,6 @@ class Bot : public Player {
                                 }
                                 cout << endl;
                             }
-    
-                            // Player turn logic
                             if (currentPlayer == 1) {
                                 cout << "\nUse arrow keys to move, Enter to attack. Cursor at (" << x << ", " << y << ")\n";
                                 int key = getKeyPress();
@@ -637,7 +633,6 @@ class Bot : public Player {
                                     }
                                 }
                             } else {
-                                // Bot's turn
                                 cout << "\nBot is attacking\n";
                                 sleep(1);
                                 bool hit = bot.performAttack(player1.getBoard());
@@ -649,7 +644,6 @@ class Bot : public Player {
                                     cout << "Bot missed\n";
                                 }
     
-                                // After bot's attack display the board
                                 cout << "\nAfter bot's attack:\n";
                                 for (int i = 0; i < 10; ++i) {
                                     for (int j = 0; j < 10; ++j) {
@@ -670,9 +664,64 @@ class Bot : public Player {
                         break;
                     }
     
-                    case 1:
-                        // Player vs Player logic here
+                    case 1: {
+                        string name1, name2;
+                        cout << "Enter name for Player 1: ";
+                        getline(cin, name1);
+                        cout << "Enter name for Player 2: ";
+                        getline(cin, name2);
+                    
+                        Player player1(name1);
+                        Player player2(name2);
+                    
+                        player1.placeShips();
+                        cout << "\n" << name1 << " done. Press any key to switch to " << name2;
+                        getKeyPress();
+                        system("clear");
+                    
+                        player2.placeShips();
+                        cout << "\n" << name2 << " done. Press any key to start the game";
+                        getKeyPress();
+                    
+                        int currentPlayer = 1;
+                        int x = 0, y = 0;
+                        int move = 0;
+                    
+                        while (true) {
+                            system("clear");
+                            Player& attacker = (currentPlayer == 1) ? player1 : player2;
+                            Player& defender = (currentPlayer == 1) ? player2 : player1;
+                    
+                            cout << attacker.getName() << "'s Turn. Press Enter to fire.\n";
+                            defender.getBoard().displayBoard(x, y, 1, "right", "opponent");
+                            int key = getKeyPress();
+                            if (key == KEY_UP && x > 0) x--;
+                            else if (key == KEY_DOWN && x < 9) x++;
+                            else if (key == KEY_LEFT && y > 0) y--;
+                            else if (key == KEY_RIGHT && y < 9) y++;
+                            else if (key == KEY_ENTER) {
+                                bool hit = defender.getBoard().attack(x, y);
+                                if (hit) {
+                                    cout << "\n\033[32mHit!\033[0m\n";
+                                    defender.checkSunkShips(x, y);  
+                                } else {
+                                    cout << "\n\033[31mMiss!\033[0m\n";
+                                    currentPlayer = 3 - currentPlayer;
+                                }
+                    
+                                if (defender.getBoard().isGameOver()) {
+                                    cout << "\nAll ships sunk. \033[36m" << attacker.getName() << "\033[0m wins in " <<endl;
+                                    cout << "Press any key to exit...\n";
+                                    getKeyPress();  
+                                    break;
+                                }
+                    
+                                cout << "Press any key to continue...";
+                                getKeyPress();
+                            }
+                        }
                         break;
+                    }
     
                     case 2:
                         // Bot vs Bot logic here
