@@ -741,10 +741,71 @@ class Bot : public Player {
                         break;
                     }
     
-                    case 2:
-                        // Bot vs Bot logic here
+                    case 2: {
+                        Bot bot1("Bot 1");
+                        Bot bot2("Bot 2");
+                    
+                        bot1.placeShips();
+                        cout << "\nBot 1 ships placed. Press any key to continue...";
+                        getKeyPress();
+                        system("clear");
+                    
+                        bot2.placeShips();
+                        cout << "\nBot 2 ships placed. Press any key to start the game...";
+                        getKeyPress();
+                    
+                        int currentPlayer = 1;
+                    
+                        while (true) {
+                            system("clear");
+                            Bot& attacker = (currentPlayer == 1) ? bot1 : bot2;
+                            Bot& defender = (currentPlayer == 1) ? bot2 : bot1;
+                    
+                            cout << attacker.getName() << "'s Turn.\n";
+                    
+                            Position target = attacker.chooseTarget();
+                            cout << attacker.getName() << " attacks at (" << target.x << ", " << target.y << ")\n";
+                    
+                            bool hit = defender.getBoard().attack(target.x, target.y);
+                            if (hit) {
+                                cout << "Hit!\n";
+                                defender.checkSunkShips(target.x, target.y);
+                            
+                                if (defender.getBoard().isGameOver()) {
+                                    cout << "\n\033[36m" << attacker.getName() << "\033[0m wins!\n";
+                                    break;
+                                }
+                            
+                                continue;
+                            } else {
+                                cout << "Miss\n";
+                            }
+                    
+                            cout << "\n" << bot1.getName() << "'s Board:               " << bot2.getName() << "'s Board:\n";
+                            for (int i = 0; i < 10; ++i) {
+                                for (int j = 0; j < 10; ++j) {
+                                    cout << bot1.getBoard().getKey(i, j) << " ";
+                                }
+                                cout << "         ";
+                                for (int j = 0; j < 10; ++j) {
+                                    cout << bot2.getBoard().getKey(i, j) << " ";
+                                }
+                                cout << endl;
+                            }
+                    
+                            if (defender.getBoard().isGameOver()) {
+                                cout << "\n\033[36m" << attacker.getName() << "\033[0m wins!\n";
+                                break;
+                            }
+                    
+                            currentPlayer = 3 - currentPlayer;
+                    
+                            cout << "\nPress any key to continue...\n";
+                            getKeyPress();
+                        }
+                    
                         break;
-    
+                    }
                     case 3:
                         cout << "Exiting the game...\n";
                         return 0;
