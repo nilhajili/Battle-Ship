@@ -153,6 +153,7 @@ private:
     vector<Position> _positions;
     int _x, _y, _len, _hitsTaken;
     bool _isHorizontal;
+    bool counted = false;
 public:
     Ship(int x, int y, int len, bool horizontal){
         setX(x);
@@ -184,7 +185,7 @@ public:
     int getX(){
         return _x;
     }
-    int getLen(){
+    int getLen()const {
         return _len;
     }
     bool getIsHorizontal(){
@@ -193,6 +194,12 @@ public:
     vector<Position> getPositions() const {
         return _positions;
     }
+    bool isCounted() const {
+         return counted; 
+        }
+    void markCounted() { 
+        counted = true;
+     }
     static bool place(Board& board, vector<Ship>& ships, int x, int y, int len, const string& direction,
         int& one, int& two, int& three, int& four) {
             if ((len == 1 && one >= 4) || (len == 2 && two >= 3) ||
@@ -297,15 +304,26 @@ public:
     void displayBoard(int cursorX = -1, int cursorY = -1, int length=1 , const string& direction="right") const {
        board.displayBoard(cursorX, cursorY, length,direction);
     }
-    void checkSunkShips(int x, int y) const {
-        for (const auto& ship : ships) {
+    void checkSunkShips(int x, int y) {
+        for (auto& ship : ships) {
             for (const auto& pos : ship.getPositions()) {
                 if (pos.x == x && pos.y == y) {
-                    if (ship.isSunk(board)) {
+                    if (ship.isSunk(board) && !ship.isCounted()) {
+                        ship.markCounted();  
                         cout << "\033[31mShip is completely sunk!\033[0m\n";
+    
+                        int remaining = 0;
+                        int length = ship.getLen();
+                        for (const auto& s : ships) {
+                            if (s.getLen() == length && !s.isSunk(board)) {
+                                remaining++;
+                            }
+                        }
+    
+                        cout << "Remaining ships of length " << length << ": " << remaining << "\n";
                         cout << "Press any key to continue...\n";
                         getKeyPress();
-                    } else {
+                    } else if (!ship.isSunk(board)) {
                         cout << "\033[33mHit, but ship is still afloat.\033[0m\n";
                         cout << "Press any key to continue...\n";
                         getKeyPress();
