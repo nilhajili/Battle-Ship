@@ -2,12 +2,17 @@
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
+#include <utility>
 #define KEY_UP 65
 #define KEY_DOWN 66
 #define KEY_RIGHT 67
 #define KEY_LEFT 68
 #define KEY_ENTER 10
 using namespace std;
+struct Position {
+    int x;
+    int y;
+};
 int getKeyPress() {
     struct termios oldt, newt;
     int ch;
@@ -40,41 +45,43 @@ public:
         table.resize(size, vector<string>(size, emptyPick));
     }
     void displayBoard(int cursorX = -1, int cursorY = -1, int length = 1,
-                const string& direction = "right", const string& mode = "owner") const {
+        const string& direction = "right", const string& mode = "owner") const {
         cout << "  ";
         for (int i = 0; i < size; ++i) {
         cout << i << " ";
         }
         cout << endl;
+
         for (int i = 0; i < size; ++i) {
         cout << i << " ";
         for (int j = 0; j < size; ++j) {
-        bool isCursor = false;
-        for (int k = 0; k < length; ++k) {
-            int nx = cursorX, ny = cursorY;
-            if (direction == "right") ny = cursorY + k;
-            else if (direction == "left") ny = cursorY - (length - 1) + k;
-            else if (direction == "down") nx = cursorX + k;
-            else if (direction == "up") nx = cursorX - (length - 1) + k;
-            if (i == nx && j == ny) {
-                isCursor = true;
-                break;
+            bool isCursor = false;
+            for (int k = 0; k < length; ++k) {
+                int xx = cursorX, yy = cursorY;
+                if (direction == "right") yy = cursorY + k;
+                else if (direction == "left") yy = cursorY - (length - 1) + k;
+                else if (direction == "down") xx = cursorX + k;
+                else if (direction == "up") xx = cursorX - (length - 1) + k;
+                if (i == xx && j == yy) {
+                    isCursor = true;
+                    break;
+                }
             }
-        }
 
-        string cell = table[i][j];
+            string cell = table[i][j];
+            if (mode == "opponent" && cell == shipPick) {
+                // Opponent's ships are hidden
+                cell = emptyPick;
+            }
 
-        if (mode == "opponent" && cell == shipPick)
-            cell = emptyPick;
-
-        if (isCursor)
-            cout << "\033[35m" << "+" << ' ' << "\033[0m";
-        else
-            cout << cell << " ";
+            if (isCursor)
+                cout << "\033[35m" << "+" << ' ' << "\033[0m";
+            else
+                cout << cell << " ";
         }
         cout << endl;
         }
-        }
+}
 
     string getKey(int x, int y) const {
         return table[x][y];
@@ -127,7 +134,6 @@ public:
         return true;
     }
 };
-
 class Ship {
 private:
     int _x, _y, _len, _hitsTaken;
@@ -245,7 +251,6 @@ public:
     int x = 0, y = 0;
     string direction = "right";
     int shipLength = 1;
-
     while (true) {
         system("clear");
         cout <<"\033[34m"<<"    ███████╗██╗  ██╗██╗██████╗     ██████╗ ██╗      █████╗  ██████╗███████╗ " <<"\033[0m"<<endl;
@@ -260,7 +265,6 @@ public:
         printShipCount();
         cout<<endl;
         displayBoard(x, y,shipLength,direction);
-
         int key = getKeyPress();
         if (key == KEY_UP && x > 0) x--;
         else if (key == KEY_DOWN && x < 9) x++;
@@ -290,50 +294,110 @@ public:
              <<"\033[33m"<< "  4x" <<"\033[0m"<<"\033[36m"<<four <<"\033[0m"<<endl;
     }
 };
-int main() {
-    int move = 0;
-    Player player1("Nil");
-    Player player2("Seid");
-    player1.placeShips();
-    cout << "\nPlayer 1 done. Press any key to switch to Player 2...";
-    getKeyPress();
-    system("clear");
-
-    player2.placeShips();
-    cout << "\nPlayer 2 done. Press any key to start the game...";
-    getKeyPress();
-
-    int currentPlayer = 1;
-    int x = 0, y = 0;
-    while (true) {
-        system("clear");
-        Player& attacker = (currentPlayer == 1) ? player1 : player2;
-        Player& defender = (currentPlayer == 1) ? player2 : player1;
-
-        cout << attacker.getName() << "'s Turn - Use arrows to move, Enter to fire\n";
-        defender.getBoard().displayBoard(x, y, 1, "right", "opponent");
-        int key = getKeyPress();
-        if (key == KEY_UP && x > 0) x--;
-        else if (key == KEY_DOWN && x < 9) x++;
-        else if (key == KEY_LEFT && y > 0) y--;
-        else if (key == KEY_RIGHT && y < 9) y++;
-        else if (key == KEY_ENTER) {
-            move++;  
-            if (defender.getBoard().attack(x, y)) {
-                    cout << "Hit\n";
-            } else {
-                    cout << "Miss\n";
-                    currentPlayer = 3 - currentPlayer; 
+class Bot : public Player {
+    private:
+        vector<Position> attackHistory;
+        vector<Position> hitTargets;
+    
+        bool wasAttacked(int x, int y) const {
+            for (const auto& pos : attackHistory) {
+                if (pos.x == x && pos.y == y)
+                    return true;
             }
-            if (defender.getBoard().isGameOver()) {
-                    cout << "\nAll ships sunk. " << attacker.getName() << " wins in - " << move << " moves\n";
-                    break;
-            }
-            
-            cout << "Press any key to continue";
-                getKeyPress();
-            }            
+            return false;
         }
+    
+    public:
+        Bot(const string& name) : Player(name) {
+            srand(static_cast<unsigned int>(time(nullptr)));
+        }
+        void placeShips() {
+            char board[10][10] = {};  
+            int shipLengths[] = {1, 2, 3, 4};
+            int shipCounts[] = {4, 3, 2, 1};  
+            for (int i = 0; i < 4; ++i) {
+                int len = shipLengths[i];   
+                int count = shipCounts[i]; 
+        
+                while (count > 0) {  
+                    bool placed = false;
+                    while (!placed) {
+                        int x = rand() % 10;
+                        int y = rand() % 10;
+                        string direction = (rand() % 4 == 0) ? "right" : (rand() % 3 == 0) ? "down" : (rand() % 2 == 0) ? "left" : "up";  
+                        if (direction == "right" && y + len <= 10) {
+                            bool collision = false;
+                            for (int i = 0; i < len; ++i) {
+                                if (board[x][y + i] == 'X') {
+                                    collision = true;
+                                    break;
+                                }
+                            }
+                            if (!collision) {
+                                placed = placeShip(x, y, len, "right");
+                                for (int i = 0; i < len; ++i) {
+                                    board[x][y + i] = 'X';
+                                }
+                                count--;  
+                            }
+                        }
+                        else if (direction == "down" && x + len <= 10) {
+                            bool collision = false;
+                            for (int i = 0; i < len; ++i) {
+                                if (board[x + i][y] == 'X') {
+                                    collision = true;
+                                    break;
+                                }
+                            }
+                            if (!collision) {
+                                placed = placeShip(x, y, len, "down");
+                                for (int i = 0; i < len; ++i) {
+                                    board[x + i][y] = 'X';
+                                }
+                                count--; 
+                            }
+                        }
+                        else if (direction == "left" && y - len >= 0) {
+                            bool collision = false;
+                            for (int i = 0; i < len; ++i) {
+                                if (board[x][y - i] == 'X') {
+                                    collision = true;
+                                    break;
+                                }
+                            }
+                            if (!collision) {
+                                
+                                placed = placeShip(x, y, len, "left");
+                                for (int i = 0; i < len; ++i) {
+                                    board[x][y - i] = 'X';
+                                }
+                                count--; 
+                            }
+                        }
+                        else if (direction == "up" && x - len >= 0) {
+                            bool collision = false;
+                            for (int i = 0; i < len; ++i) {
+                                if (board[x - i][y] == 'X') {
+                                    collision = true;
+                                    break;
+                                }
+                            }
+                            if (!collision) {
+                                
+                                placed = placeShip(x, y, len, "up");
+                                
+                                for (int i = 0; i < len; ++i) {
+                                    board[x - i][y] = 'X';
+                                }
+                                count--;  
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+    };
+int main() {
     }
-
-
