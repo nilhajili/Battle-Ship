@@ -433,84 +433,81 @@ class Bot : public Player {
             srand(static_cast<unsigned int>(time(nullptr)));
         }
         void placeShips() {
-            char board[10][10] = {};  
+            char board[10][10] = {};
             int shipLengths[] = {1, 2, 3, 4};
-            int shipCounts[] = {4, 3, 2, 1};  
-            for (int i = 0; i < 4; ++i) {
-                int len = shipLengths[i];   
-                int count = shipCounts[i]; 
+            int shipCounts[] = {4, 3, 2, 1};
         
-                while (count > 0) {  
+            vector<string> directions = {"right", "down", "left", "up"};
+        
+            for (int i = 0; i < 4; ++i) {
+                int len = shipLengths[i];
+                int count = shipCounts[i];
+        
+                while (count > 0) {
                     bool placed = false;
+        
                     while (!placed) {
                         int x = rand() % 10;
                         int y = rand() % 10;
-                        string direction = (rand() % 4 == 0) ? "right" : (rand() % 3 == 0) ? "down" : (rand() % 2 == 0) ? "left" : "up";  
+                        string direction = directions[rand() % 4];
+        
                         if (direction == "right" && y + len <= 10) {
                             bool collision = false;
-                            for (int i = 0; i < len; ++i) {
-                                if (board[x][y + i] == 'X') {
-                                    collision = true;
-                                    break;
-                                }
-                            }
+                            for (int j = 0; j < len; ++j)
+                                if (board[x][y + j] == 'X') collision = true;
+        
                             if (!collision) {
                                 placed = placeShip(x, y, len, "right");
-                                for (int i = 0; i < len; ++i) {
-                                    board[x][y + i] = 'X';
+                                if (placed) {
+                                    for (int j = 0; j < len; ++j)
+                                        board[x][y + j] = 'X';
+                                    count--;
                                 }
-                                count--;  
                             }
                         }
+        
                         else if (direction == "down" && x + len <= 10) {
                             bool collision = false;
-                            for (int i = 0; i < len; ++i) {
-                                if (board[x + i][y] == 'X') {
-                                    collision = true;
-                                    break;
-                                }
-                            }
+                            for (int j = 0; j < len; ++j)
+                                if (board[x + j][y] == 'X') collision = true;
+        
                             if (!collision) {
                                 placed = placeShip(x, y, len, "down");
-                                for (int i = 0; i < len; ++i) {
-                                    board[x + i][y] = 'X';
+                                if (placed) {
+                                    for (int j = 0; j < len; ++j)
+                                        board[x + j][y] = 'X';
+                                    count--;
                                 }
-                                count--; 
                             }
                         }
-                        else if (direction == "left" && y - len >= 0) {
+        
+                        else if (direction == "left" && y - len + 1 >= 0) {
                             bool collision = false;
-                            for (int i = 0; i < len; ++i) {
-                                if (board[x][y - i] == 'X') {
-                                    collision = true;
-                                    break;
-                                }
-                            }
+                            for (int j = 0; j < len; ++j)
+                                if (board[x][y - j] == 'X') collision = true;
+        
                             if (!collision) {
-                                
                                 placed = placeShip(x, y, len, "left");
-                                for (int i = 0; i < len; ++i) {
-                                    board[x][y - i] = 'X';
+                                if (placed) {
+                                    for (int j = 0; j < len; ++j)
+                                        board[x][y - j] = 'X';
+                                    count--;
                                 }
-                                count--; 
                             }
                         }
-                        else if (direction == "up" && x - len >= 0) {
+        
+                        else if (direction == "up" && x - len + 1 >= 0) {
                             bool collision = false;
-                            for (int i = 0; i < len; ++i) {
-                                if (board[x - i][y] == 'X') {
-                                    collision = true;
-                                    break;
-                                }
-                            }
+                            for (int j = 0; j < len; ++j)
+                                if (board[x - j][y] == 'X') collision = true;
+        
                             if (!collision) {
-                                
                                 placed = placeShip(x, y, len, "up");
-                                
-                                for (int i = 0; i < len; ++i) {
-                                    board[x - i][y] = 'X';
+                                if (placed) {
+                                    for (int j = 0; j < len; ++j)
+                                        board[x - j][y] = 'X';
+                                    count--;
                                 }
-                                count--;  
                             }
                         }
                     }
